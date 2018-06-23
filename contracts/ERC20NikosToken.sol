@@ -4,7 +4,7 @@ pragma solidity ^0.4.17;
 contract ERC20NikosToken{
   // Tokens name
   string public name;
-  /* string public symbol; */
+  string public symbol;
 
   // Number of token decimals.
   // 18 so because that is the number of 0 1 ether has when
@@ -19,7 +19,12 @@ contract ERC20NikosToken{
 
   // How much ether does on token costs
   // Can be set by the token administrator
-  int tokenPrice;
+  uint tokenPrice = 1000000000000000; //1.000.000.000.000.000
+
+  // Manager of the token
+  public address manager;
+
+  uint256 public bankBalance;
 
   // Array with the balance of users
   mapping (address => uint256) public balanceOf;
@@ -28,11 +33,14 @@ contract ERC20NikosToken{
   // Generates an event on the blockchain to notify clients about the transfer
   event Transfer(address indexed from, address indexed to, uint256 value);
 
-  constructor(string _name, uint256 _initialSupply) public {
+  constructor(string _name, string _symbol, uint256 _initialSupply) public {
+    manager = msg.sender;
+
     name = _name;
-    /* symbol = _symbol; */
+    symbol = _symbol;
     initialSupply = _initialSupply * 10 ** uint256(decimals);
     totalSupply = initialSupply;
+    bankBalance = initialSupply;
 
     // The creator of the token has all of the tokens uppon creation
     balanceOf[msg.sender] = totalSupply;
@@ -86,6 +94,28 @@ contract ERC20NikosToken{
    function approve(address spender, uint256 value) public returns (bool success){
      allowance[msg.sender][spender] = value;
      return true;
+   }
+
+   /*
+    * Buy 'amount' amount Tokens
+    * User must pay in ether according to the token price
+    */
+   function buy(uint256 amount) public payable {
+       require(msg.value == (amount * tokenPrice));
+       balanceOf[msg.sender] += amount;
+   }
+
+   /*
+    * Create 'amount' new tokens
+    * Only the manager can call this function
+    */
+   function createTokens(uint256 amount) public managerOnly {
+     bankBalance += ammmount;
+   }
+
+   modifier managerOnly() {
+     require(msg.sender == manager);
+     _;
    }
 
 }
