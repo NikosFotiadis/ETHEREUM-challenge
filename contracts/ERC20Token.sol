@@ -98,7 +98,7 @@ contract ERC20Token{
    }
 }
 
-contract ErcTokenFON is ownedContract, ERC20Token{
+contract MyErcToken is ownedContract, ERC20Token{
 
   // Token price in wei
   uint256 public tokenPrice;
@@ -118,6 +118,15 @@ contract ErcTokenFON is ownedContract, ERC20Token{
   }
 
   function setTokenPrice(uint256 newPrice) public ownerOnly {
-     tokenPrice = newPrice;
+    tokenPrice = newPrice;
+  }
+
+  function cashOut(uint256 ammount) public ownerOnly {
+    require(ammount <= address(this).balance);
+    msg.sender.transfer(ammount);
+  }
+
+  function contractEther() public view ownerOnly returns (uint256){
+   return address(this).balance;
   }
 }
