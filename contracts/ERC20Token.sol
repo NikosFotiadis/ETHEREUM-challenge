@@ -1,7 +1,23 @@
 pragma solidity ^0.4.17;
 
+contract ownedContract {
+  address public owner;
 
-contract ERC20NikosToken{
+  constructor () public {
+    owner = msg.sender;
+  }
+
+  function transferContrac(address newOwner) public ownerOnly{
+    owner = newOwner;
+  }
+
+  modifier ownerOnly {
+    require(msg.sender == owner);
+    _;
+  }
+}
+
+contract ERC20Token{
   // Tokens name
   string public name;
   string public symbol;
@@ -14,18 +30,6 @@ contract ERC20NikosToken{
   // The total supply of the token
   uint256 public totalSupply;
 
-  // The initial supply of the token
-  uint256 public initialSupply;
-
-  // How much ether does on token costs
-  // Can be set by the token administrator
-  uint tokenPrice = 1000000000000000; //1.000.000.000.000.000
-
-  // Manager of the token
-  public address manager;
-
-  uint256 public bankBalance;
-
   // Array with the balance of users
   mapping (address => uint256) public balanceOf;
   mapping (address => mapping (address => uint256)) public allowance;
@@ -34,13 +38,10 @@ contract ERC20NikosToken{
   event Transfer(address indexed from, address indexed to, uint256 value);
 
   constructor(string _name, string _symbol, uint256 _initialSupply) public {
-    manager = msg.sender;
 
     name = _name;
     symbol = _symbol;
-    initialSupply = _initialSupply * 10 ** uint256(decimals);
-    totalSupply = initialSupply;
-    bankBalance = initialSupply;
+    totalSupply = _initialSupply * 10 ** uint256(decimals);
 
     // The creator of the token has all of the tokens uppon creation
     balanceOf[msg.sender] = totalSupply;
@@ -95,27 +96,28 @@ contract ERC20NikosToken{
      allowance[msg.sender][spender] = value;
      return true;
    }
+}
 
-   /*
-    * Buy 'amount' amount Tokens
-    * User must pay in ether according to the token price
-    */
-   function buy(uint256 amount) public payable {
-       require(msg.value == (amount * tokenPrice));
-       balanceOf[msg.sender] += amount;
-   }
+contract ErcTokenFON is ownedContract, ERC20Token{
 
-   /*
-    * Create 'amount' new tokens
-    * Only the manager can call this function
-    */
-   function createTokens(uint256 amount) public managerOnly {
-     bankBalance += ammmount;
-   }
+  // Token price in wei
+  uint256 public tokenPrice;
 
-   modifier managerOnly() {
-     require(msg.sender == manager);
-     _;
-   }
+  constructor (string name, string symbol, uint256 initialSupply, uint256 initialPrice) ERC20Token(name,symbol,initialSupply) public {
+    tokenPrice = initialPrice;
+  }
 
+  function transfer(address to, uint256 ammount) public {
+    InternalTransfer(msg.sender,to,ammount);
+  }
+
+  function () payable public {
+    uint ammount = msg.value / tokenPrice;
+    require(ammount <= balanceOf[owner]);
+    InternalTransfer(owner,msg.sender,ammount);
+  }
+
+  function setTokenPrice(uint256 newPrice) public ownerOnly {
+     tokenPrice = newPrice;
+  }
 }
